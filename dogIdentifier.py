@@ -1,5 +1,10 @@
 #Code was used from https://github.com/jeremyjordan/machine-learning/blob/master/projects/dog-project/dog_app.ipynb
 
+#Need to download Bottleneck feature from https://www.floydhub.com/s_joy/datasets/bottleneck_features/3/DogInceptionV3Data.npz
+
+
+
+
 from sklearn.datasets import load_files
 from keras.utils import np_utils
 from keras.applications.resnet50 import ResNet50
@@ -9,6 +14,12 @@ from tqdm import tqdm
 import numpy as np
 from glob import glob
 import cv2
+from keras import regularizers
+from keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D, AveragePooling2D
+from keras.layers import Dropout, Flatten, Dense
+from keras.models import Sequential
+from keras.callbacks import ModelCheckpoint
+import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import random
 random.seed(8675309)
@@ -88,30 +99,30 @@ def dog_detector(img_path):
 #Detecting Human Faces
 #
 # extract pre-trained face detector
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_alt.xml')
-
-# load color (BGR) image
-img = cv2.imread(human_files[1])
-# convert BGR image to grayscale
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-# find faces in image
-faces = face_cascade.detectMultiScale(gray)
-
-# print number of faces detected in the image
-print('Number of faces detected:', len(faces))
-
-# get bounding box for each detected face
-for (x, y, w, h) in faces:
-    # add bounding box to color image
-    cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-
-# convert BGR image to RGB for plotting
-cv_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-# display the image, along with bounding box
-plt.imshow(cv_rgb)
-plt.show()
+# face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_alt.xml')
+#
+# # load color (BGR) image
+# img = cv2.imread(human_files[1])
+# # convert BGR image to grayscale
+# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#
+# # find faces in image
+# faces = face_cascade.detectMultiScale(gray)
+#
+# # print number of faces detected in the image
+# print('Number of faces detected:', len(faces))
+#
+# # get bounding box for each detected face
+# for (x, y, w, h) in faces:
+#     # add bounding box to color image
+#     cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+#
+# # convert BGR image to RGB for plotting
+# cv_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+#
+# # display the image, along with bounding box
+# plt.imshow(cv_rgb)
+# plt.show()
 #
 #
 #Detecting Human Faces
@@ -126,20 +137,20 @@ plt.show()
 #Assessing the Human Face Detector
 #
 # Select subset of data for faster evaluation
-human_files_short = human_files[:100]
-dog_files_short = train_files[:100]
-
-# Vectorize the face dectector function
-faces_vfunc = np.vectorize(face_detector)
-
-# Detect faces in both sets
-human_faces = faces_vfunc(human_files_short)
-dog_faces = faces_vfunc(dog_files_short)
-
-# Calculate and print percentage of faces in each set
-print('Faces detected in {:.2f}% of the sample human dataset.'.format((sum(human_faces)/len(human_faces))*100))
-print('Faces detected in {:.2f}% of the sample dog dataset.'.format((sum(dog_faces)/len(dog_faces))*100))
+# human_files_short = human_files[:100]
+# dog_files_short = train_files[:100]
 #
+# # Vectorize the face dectector function
+# faces_vfunc = np.vectorize(face_detector)
+#
+# # Detect faces in both sets
+# human_faces = faces_vfunc(human_files_short)
+# dog_faces = faces_vfunc(dog_files_short)
+#
+# # Calculate and print percentage of faces in each set
+# print('Faces detected in {:.2f}% of the sample human dataset.'.format((sum(human_faces)/len(human_faces))*100))
+# print('Faces detected in {:.2f}% of the sample dog dataset.'.format((sum(dog_faces)/len(dog_faces))*100))
+# #
 #Assessing the Human Face Detector
 #
 
@@ -150,16 +161,177 @@ print('Faces detected in {:.2f}% of the sample dog dataset.'.format((sum(dog_fac
 # Files already loaded in previous cell
 
 # Vectorize the face dectector function
-dog_vfunc = np.vectorize(dog_detector)
+# dog_vfunc = np.vectorize(dog_detector)
 
 # Detect dogs in both sets
-human_dogs = dog_vfunc(human_files_short)
-dog_dogs = dog_vfunc(dog_files_short)
+# human_dogs = dog_vfunc(human_files_short)
+# dog_dogs = dog_vfunc(dog_files_short)
 
 # Calculate and print percentage of faces in each set
-print('Dogs detected in {:.2f}% of the sample human dataset.'.format((sum(human_dogs)/len(human_dogs))*100))
-print('Dogs detected in {:.2f}% of the sample dog dataset.'.format((sum(dog_dogs)/len(dog_dogs))*100))
+# print('Dogs detected in {:.2f}% of the sample human dataset.'.format((sum(human_dogs)/len(human_dogs))*100))
+# print('Dogs detected in {:.2f}% of the sample dog dataset.'.format((sum(dog_dogs)/len(dog_dogs))*100))
 #
 #
 #Assessing the Dog Detector
 #
+
+
+#
+#
+#Obtain Bottleneck Features
+#
+#
+bottleneck_features = np.load('DogInceptionV3Data.npz')
+train_InceptionV3 = bottleneck_features['train']
+valid_InceptionV3 = bottleneck_features['valid']
+test_InceptionV3 = bottleneck_features['test']
+train_InceptionV3.shape[1:]
+#
+#
+#Obtain Bottleneck Features
+#
+#
+
+
+
+#
+#
+#Model Architecture
+#
+#
+inception_model = Sequential()
+inception_model.add(GlobalAveragePooling2D(input_shape=train_InceptionV3.shape[1:]))
+inception_model.add(Dense(150, activation='relu', kernel_regularizer=regularizers.l2(0.005)))
+inception_model.add(Dropout(0.4))
+inception_model.add(Dense(dog_breeds, activation='softmax'))
+
+#Compiling the Model
+inception_model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+
+
+#Now train the Model
+# checkpointer = ModelCheckpoint(filepath='weights.best.InceptionV3.hdf5',
+#                                verbose=1, save_best_only=True)
+#
+# inception_model.fit(train_InceptionV3, train_targets,
+#           validation_data=(valid_InceptionV3, valid_targets),
+#           epochs=20, batch_size=20, callbacks=[checkpointer], verbose=1)
+
+
+
+#Load the Model with the
+inception_model.load_weights('weights.best.InceptionV3.hdf5')
+
+#Prints out the summary of the Model
+# inception_model.summary()
+#
+#
+#Model Architecture
+#
+#
+
+
+
+#
+#
+#   Testing the Model on the test Dataset of dog images
+#
+#
+# get index of predicted dog breed for each image in test set
+InceptionV3_predictions = [np.argmax(inception_model.predict(np.expand_dims(feature, axis=0))) for feature in test_InceptionV3]
+
+# report test accuracy
+test_accuracy = 100*np.sum(np.array(InceptionV3_predictions)==np.argmax(test_targets, axis=1))/len(InceptionV3_predictions)
+print('Test accuracy: %.4f%%' % test_accuracy)
+
+#
+#
+#   Predict Dog Breed using the model
+#
+#
+def extract_InceptionV3(tensor):
+    from keras.applications.inception_v3 import InceptionV3, preprocess_input
+    return InceptionV3(weights='imagenet', include_top=False).predict(preprocess_input(tensor))
+
+
+
+# top_N defines how many predictions to return
+top_N = 4
+
+
+
+def predict_breed(path):
+    # load image using path_to_tensor
+    print('Loading image...')
+    image_tensor = path_to_tensor(path)
+
+    # obtain bottleneck features using extract_InceptionV3
+    print('Extracting bottleneck features...')
+    bottleneck_features = extract_InceptionV3(image_tensor)
+
+    # feed into top_model for breed prediction
+    print('Feeding bottlenneck features into top model...')
+    prediction = inception_model.predict(bottleneck_features)[0]
+
+    # sort predicted breeds by highest probability, extract the top N predictions
+    breeds_predicted = [dog_names[idx] for idx in np.argsort(prediction)[::-1][:top_N]]
+    confidence_predicted = np.sort(prediction)[::-1][:top_N]
+
+    print('Predicting breed...')
+    # take prediction, lookup in dog_names, return value
+    return breeds_predicted, confidence_predicted
+#
+#
+#   Predict Dog Breed using the model
+#
+#
+
+
+
+
+#
+#
+#   Our Algorithm for making prediction
+#
+#
+def make_prediction(path, multiple_breeds=False):
+    breeds, confidence = predict_breed(path)
+    img = mpimg.imread(path)
+    plt.axis('off')
+
+    # since the dog detector worked better, and we don't have
+    # access to softmax probabilities from dog and face detectors
+    # we'll first check for dog detection, and only if there are no dogs
+    # detected we'll check for humans
+
+    if dog_detector(path):
+        print('Woof woof!')
+        imgplot = plt.imshow(img)
+        print('You look like a {}.'.format(breeds[0].replace("_", " ")))
+        plt.show()
+
+        if multiple_breeds:
+            print('\n\nTop 4 predictions (for mixed breeds)')
+            for i, j in zip(breeds, confidence):
+                print('Predicted breed: {} with a confidence of {:.4f}'.format(i.replace("_", " "), j))
+
+    elif face_detector(path):
+        print('Hello human!')
+        imgplot = plt.imshow(img)
+        print('If you were a dog, you\'d be a {}.'.format(breeds[0].replace("_", " ")))
+    else:
+        raise ValueError('Could not detect dogs or humans in image.')
+
+#
+#
+#   Our Algorithm for making prediction
+#
+#
+
+
+make_prediction('images/australian-shepherd-card-small.jpg')
+
+
+make_prediction('images/blueheeler.jpg')
+
+make_prediction('images/germanshep.jpg')
