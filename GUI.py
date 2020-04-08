@@ -14,7 +14,7 @@ from tkinter import filedialog
 from PIL import ImageTk,Image
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-import dogidentifier as dog
+# import dogidentifier as dog
 
 
 root = Tk()
@@ -41,6 +41,8 @@ for frame in [lFrame,rFrame1,rFrame2,rFrame3]:
 
 # uploads photo to GUI
 def open():
+    global lab
+    global lab2
     global imK
     root.filename = filedialog.askopenfilename(initialdir="/home/", title="Select a file", filetypes=(("jpeg","*.jpg"),("all","*.*")))
     image = Image.open(root.filename)
@@ -49,17 +51,25 @@ def open():
     imLab = Label(lFrame, image=imK).pack(fill=BOTH, expand=True)
     breed, conf, spec = dog.make_prediction(root.filename, True)
     if spec == "human":
-        lab = Label(bFrame, text="Hello Human!\nYou look most like a ").pack(side=LEFT)
-        lab2 = Label(bFrame, text=breed[0]).pack(side=LEFT)
+        lab = Label(bFrame, text="Hello Human!\nYou look most like a: ")
+        lab.pack(side=LEFT)
+        lab2 = Label(bFrame, text=breed[0])
+        lab2.pack(side=LEFT)
     else:
-        lab = Label(bFrame, text="Woof Woof!\nThis dog is most likely a ").pack(side=LEFT)
-        lab2 = Label(bFrame, text=breed[0]).pack(side=LEFT)
-    data((1,2,3,4),conf,breed)
+        lab = Label(bFrame, text="Woof Woof!\nThis dog is most likely a: ")
+        lab.pack(side=LEFT)
+        lab2 = Label(bFrame, text=breed[0])
+        lab2.pack(side=LEFT)
+    data((1, 2, 3, 4), conf, breed)
     return ImageTk.PhotoImage(Image.open(root.filename))
+
 
 def clean():
     for widget in lFrame.winfo_children():
         widget.destroy()
+    lab.destroy()
+    lab2.destroy()
+    myButton["state"] = NORMAL
 
 
 def click():
@@ -74,6 +84,7 @@ def data(pos, per, type):
 
     plt.bar(positions, height=percentage)
     plt.xticks(positions, breeds)
+    plt.text(color="black")
 
 # sample data
 dogs = []
@@ -90,10 +101,10 @@ percen.append(0.13)
 # dog1= Label(mFrame, text="Most likely: ").pack(side=LEFT, pady=150)
 # dog2= Label(mFrame, text="Next most likely: ").pack(side=LEFT,pady=150)
 # dog3= Label(mFrame, text="Least likely: ").pack(side=LEFT)
-myLabel = Label(bFrame, text="Upload a photo of a dog.").pack()
-myButton = Button(bFrame, text = "Upload", command=open).pack()
-nextButton = Button(bFrame, text="Clean", command=clean).pack()
-stats = Button(bFrame, text="Statistics",command=click).pack(side=RIGHT)
+myLabel = Label(bFrame, text="Upload a photo of a dog.",foreground="black").pack()
+myButton = Button(bFrame, text = "Upload", foreground="black", command=open).pack()
+nextButton = Button(bFrame, text="Clean", foreground="black", command=clean).pack()
+stats = Button(bFrame, text="Statistics", foreground="black",command=click).pack(side=RIGHT)
 # root.iconbitmap('')
 
 # puts image in gui bg
