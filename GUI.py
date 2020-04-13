@@ -14,7 +14,7 @@ from tkinter import filedialog
 from PIL import ImageTk,Image
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-# import dogidentifier as dog
+import dogidentifier as dog
 
 
 root = Tk()
