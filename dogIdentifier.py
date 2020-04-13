@@ -303,7 +303,14 @@ def make_prediction(path, multiple_breeds=False):
     # access to softmax probabilities from dog and face detectors
     # we'll first check for dog detection, and only if there are no dogs
     # detected we'll check for humans
+    
+    if dog_detector(path):
+        if multiple_breeds:
+            return breeds, confidence, "dog"        # returns a tuple of ([breeds],[confidence], type of species)
 
+        elif face_detector(path):
+            return breeds, confidence, "human"
+"""
     if dog_detector(path):
         print('Woof woof!')
         imgplot = plt.imshow(img)
@@ -321,17 +328,9 @@ def make_prediction(path, multiple_breeds=False):
         print('If you were a dog, you\'d be a {}.'.format(breeds[0].replace("_", " ")))
     else:
         raise ValueError('Could not detect dogs or humans in image.')
-
+"""
 #
 #
 #   Our Algorithm for making prediction
 #
 #
-
-
-make_prediction('images/australian-shepherd-card-small.jpg')
-
-
-make_prediction('images/blueheeler.jpg')
-
-make_prediction('images/germanshep.jpg')
