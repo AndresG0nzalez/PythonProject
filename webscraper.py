@@ -1,17 +1,23 @@
-# webscraper code
-
-#from selenium import webdriver
 from bs4 import BeautifulSoup
-import pandas as pd
 import requests
+import urllib.request
+import os
 
-print("testing")
-#driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
-#breeds=[]
+url = "https://www.akc.org/dog-breeds/page/2/"
+html = requests.get(url).text
+soup = BeautifulSoup(html, "html.parser")
 
+imgs = soup.findAll("img", attrs={'width': '400'})
 
-URL = 'https://www.akc.org/dog-breeds/'
-page = requests.get(URL)
-soup = BeautifulSoup(page.content, 'html.parser')
+#print(imgs)
+breeds = []
 
-breed = soup.find(id="breed-type-card__title mt0 mb0 f-25 py3 px3")
+for link in imgs:
+    if "http" in link.get('data-src'):
+        #print(link.get('data-src'))
+        breeds.append(link.get('data-src'))
+
+#print(breeds)
+print(breeds[1])
+img_name = os.path.basename(breeds[1])
+urllib.request.urlretrieve(breeds[1], img_name)
