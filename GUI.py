@@ -14,7 +14,9 @@ from tkinter import filedialog
 from PIL import ImageTk,Image
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-import dogidentifier as dog
+import dogIdentifier as dog
+import numpy as np
+import random
 
 
 root = Tk()
@@ -44,6 +46,7 @@ def open():
     global lab
     global lab2
     global imK
+
     root.filename = filedialog.askopenfilename(initialdir="/home/", title="Select a file", filetypes=(("jpeg","*.jpg"),("all","*.*")))
     image = Image.open(root.filename)
     image = image.resize((1000,750),Image.ANTIALIAS)
@@ -58,11 +61,10 @@ def open():
     else:
         lab = Label(bFrame, text="Woof Woof!\nThis dog is most likely a: ")
         lab.pack(side=LEFT)
-        lab2 = Label(bFrame, text=breed[0])
+        lab2 = Label(bFrame, text=breed[0])	
         lab2.pack(side=LEFT)
-    data((1, 2, 3, 4), conf, breed)
+    pltData(conf, breed)
     return ImageTk.PhotoImage(Image.open(root.filename))
-
 
 def clean():
     for widget in lFrame.winfo_children():
@@ -71,20 +73,42 @@ def clean():
     lab2.destroy()
     myButton["state"] = NORMAL
 
-
 def click():
-    plt.show()
+	plt.show()
 
+def pltData(conf, breed):
+    per = list(conf)
+    labels = list(breed)
+    cmap = ['#BB5DA4', '#EF954B', '#FEC343', '#74B185', '#3A72A4', 
+            '#8D8FD8', '#E6F69D', '#AADEA7', '#64C2A6', '#2D87BB', '#FFBD66']	
+    colors = []
+    for i in range(0, len(labels)):
+        colors.append(cmap[i])
 
-def data(pos, per, type):
-    positions = pos
-    percentage = per
-    breeds = type
-    plt.title("Dog Breed Likeliness")
+    explode = [0.05] * len(labels)
 
-    plt.bar(positions, height=percentage)
-    plt.xticks(positions, breeds)
-    plt.text(color="black")
+    fig, ax = plt.subplots(figsize=(9, 9), subplot_kw=dict(aspect="equal"))
+    fig1 = plt.figure(1)
+    plt.close()
+
+    wedges, texts, autotexts = ax.pie(per, colors=colors, autopct='%1.1f%%',
+                                      explode=explode, startangle=90, pctdistance=0.85)
+    ax.legend(wedges, labels,
+              title="Breeds",
+              loc="center",
+              bbox_to_anchor=(0.5, 0.5))
+
+    plt.setp(autotexts, size=8, weight="bold")
+
+    bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
+    kw = dict(arrowprops=dict(arrowstyle="-"),
+          bbox=bbox_props, zorder=0, va="center")
+
+    cir = plt.Circle((0,0), 0.70, fc='white')
+    plt.gca().add_artist(cir)
+
+    ax.set_title('Breed Prediction Breakdown', fontsize=22, fontweight='bold', loc='center')
+
 
 # sample data
 dogs = []
