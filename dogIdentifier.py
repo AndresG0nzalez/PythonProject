@@ -253,12 +253,30 @@ def extract_InceptionV3(tensor):
     from keras.applications.inception_v3 import InceptionV3, preprocess_input
     return InceptionV3(weights='imagenet', include_top=False).predict(preprocess_input(tensor))
 
-
+#Takes most significants breeds (that is, we show breeds until we've
+#reach a certain threshold (2%))
+#Then we just fill out the rest of the graph with the 'other' label
+#That way we have a complete graph 100% percent 
+def topBreeds(breeds, conf):
+    dogs = []
+    per = []
+    for i in range(0, len(breeds)):
+        if conf[i] < 0.02:
+            break
+        per.append(conf[i])
+    #find out the value of 'other'
+    total = np.sum(per)
+    other = 1 - total
+    
+    for i in range(0, len(per)):
+        dogs.append(breeds[i])
+        
+    per.append(other)
+    dogs.append('Other')
+    return dogs, per
 
 # top_N defines how many predictions to return
-top_N = 4
-
-
+top_N = 10 
 
 def predict_breed(path):
     # load image using path_to_tensor
@@ -277,9 +295,11 @@ def predict_breed(path):
     breeds_predicted = [dog_names[idx] for idx in np.argsort(prediction)[::-1][:top_N]]
     confidence_predicted = np.sort(prediction)[::-1][:top_N]
 
+	#The top breeds that make up 100%
+    breeds, percentage = topBreeds(breeds_predicted, confidence_predicted)
     print('Predicting breed...')
     # take prediction, lookup in dog_names, return value
-    return breeds_predicted, confidence_predicted
+    return breeds, percentage
 #
 #
 #   Predict Dog Breed using the model
