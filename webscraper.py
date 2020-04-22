@@ -1,23 +1,35 @@
+#on line 32, change the path so it works on your computer
 from bs4 import BeautifulSoup
 import requests
-import urllib.request
 import os
+import urllib.request
 
-url = "https://www.akc.org/dog-breeds/page/2/"
-html = requests.get(url).text
-soup = BeautifulSoup(html, "html.parser")
+print("Fetching your dog images...")
 
-imgs = soup.findAll("img", attrs={'width': '400'})
-
-#print(imgs)
 breeds = []
+imgs = []
 
-for link in imgs:
+url2 = "https://www.akc.org/dog-breeds/"
+html2 = requests.get(url2).text
+soup2 = BeautifulSoup(html2, "html.parser")
+imgs2 = soup2.findAll("img", attrs={'width': '400'})
+for link in imgs2:
     if "http" in link.get('data-src'):
-        #print(link.get('data-src'))
         breeds.append(link.get('data-src'))
 
-#print(breeds)
-print(breeds[1])
-img_name = os.path.basename(breeds[1])
-urllib.request.urlretrieve(breeds[1], img_name)
+for x in range(2, 24):
+    string = str(x)
+    url = "https://www.akc.org/dog-breeds/page/" + string + "/"
+    html = requests.get(url).text
+    soup = BeautifulSoup(html, "html.parser")
+    imgs = soup.findAll("img", attrs={'width': '400'})
+    for link in imgs:
+        if "http" in link.get('data-src'):
+            breeds.append(link.get('data-src'))
+
+for breed in breeds:
+    img_name = os.path.basename(breed)
+    os.chdir("/Users/emilymadril/PycharmProjects/PythonProject/dog_images")
+    urllib.request.urlretrieve(breed, img_name)
+
+print("All done!")
